@@ -21,10 +21,10 @@ class UIContext:
         Output_Folder = 1
 
     def __init__(self):
-        self._callback_create_file = lambda: None
-        self.__initialize_file__()
         self._input_file_name = None
         self._output_file_name = None
+        self._callback_create_file = lambda: None
+        self.__initialize_file__()
 
     def __initialize_file__(self):
         self._persist_file = Path(__file__).parent.resolve() / Path("persist_data.json")
@@ -39,6 +39,7 @@ class UIContext:
                 json_file = json.load(f)
                 self._input_folder = json_file[UIContext.ContextPersistData.Input_Folder.name]
                 self._output_folder = json_file[UIContext.ContextPersistData.Output_Folder.name]
+                self._output_file_name = self._output_folder
 
     @property
     def input_file_name(self):
