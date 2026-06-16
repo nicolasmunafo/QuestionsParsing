@@ -12,6 +12,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# TODO: Check case when .json does not exist
-# TODO: Test edge cases when one of the directories is not set
 # TODO: PyMuPDF (fitz) to get Bold and format

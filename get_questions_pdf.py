@@ -43,8 +43,6 @@ def create_questions_file(ui_ctx: UIContext):
     # Open the file to read
     # --------------------------------------------
 
-    # file_name = 'Fragen.pdf'
-    # file_path = Path(f'./FilesReading/{file_name}').absolute()
     try:
         file_path = Path(ui_ctx._input_file_name).absolute()
     except (UnboundLocalError, TypeError):
@@ -61,8 +59,8 @@ def create_questions_file(ui_ctx: UIContext):
     # Open the file to write the final results
     # --------------------------------------------
 
-    # output_file_name = 'Fragen und Lösungen.docx'
-    # output_file_path = Path(f'./FilesReading/{output_file_name}').absolute()
+    if ui_ctx.output_file_name == None:
+        tk.messagebox.showerror(title="File not found", message=f"Select an output folder.")
 
     output_file_name = file_path.stem
     output_file_path = Path(ui_ctx.output_file_name) / Path(output_file_name + '.docx')
