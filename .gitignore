@@ -3,6 +3,7 @@ __pycache__/
 **/__pycache__/
 *.py[codz]
 *$py.class
+**/persist_data.json
 
 # C extensions
 *.so
