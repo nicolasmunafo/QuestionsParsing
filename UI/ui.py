@@ -70,7 +70,6 @@ class UIContext:
     def output_folder(self):
         return self._output_folder
 
-
     def __store_file_name___(self, file_type: ContextPersistData, file_name: str):
         with open(self._persist_file, "r") as output_file:
             json_file = json.load(output_file)
@@ -159,7 +158,9 @@ def manage_ui(ui_ctx: UIContext):
     
     button_create_file = Button(window, 
                             text = "Create file",
-                            command = lambda: ui_ctx._callback_create_file(ui_ctx)) 
+                            command = lambda: ui_ctx._callback_create_file(ui_ctx))
+    
+    # check_button_create_file(button_create_file, ui_ctx)
     
     button_exit = Button(window, 
                         text = "Exit",
@@ -193,3 +194,19 @@ def manage_ui(ui_ctx: UIContext):
     
     # Let the window wait for any events
     window.mainloop()
+
+
+def enable_button(curr_button: Button, status: bool) -> None:
+    if status:
+        curr_button.config(state="normal")
+    else:
+        curr_button.config(state="disabled")
+
+
+def check_button_create_file(curr_button: Button, ui_ctx: UIContext) -> None:
+    if ui_ctx.output_file_name == None:
+        enable_button(curr_button, False)
+    else:
+        enable_button(curr_button, True)
+
+

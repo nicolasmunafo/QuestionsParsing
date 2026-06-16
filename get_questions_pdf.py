@@ -45,8 +45,11 @@ def create_questions_file(ui_ctx: UIContext):
 
     # file_name = 'Fragen.pdf'
     # file_path = Path(f'./FilesReading/{file_name}').absolute()
-    file_path = Path(ui_ctx._input_file_name).absolute()
-
+    try:
+        file_path = Path(ui_ctx._input_file_name).absolute()
+    except (UnboundLocalError, TypeError):
+        tk.messagebox.showerror(title="File not found", message=f"Select a .pdf file.")
+        
     try:
         questions_file = pdf.PdfReader(file_path)
     except FileNotFoundError:
