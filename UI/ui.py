@@ -6,6 +6,7 @@ from tkinter import *
 from tkinter import filedialog
 import json
 from pathlib import Path
+import sys
 
 # TODO:
 # TODO:
@@ -27,7 +28,15 @@ class UIContext:
         self.__initialize_file__()
 
     def __initialize_file__(self):
-        self._persist_file = Path(__file__).parent.resolve() / Path("persist_data.json")
+        
+        # PyInstaller sets sys.frozen to True. So when running as an .exe it will get the directory of the exe
+        # Otherwise, it means we are running in VS Code
+        if getattr(sys, 'frozen', False):
+            base = Path(sys.executable).parent
+        else:
+            base = Path(__file__).parent.resolve()
+        
+        self._persist_file = base / Path("persist_data.json")
         self._input_folder = "/"
         self._output_folder = "/"
 
@@ -165,7 +174,7 @@ def manage_ui(ui_ctx: UIContext):
     
     button_exit = Button(window, 
                         text = "Exit",
-                        command = exit) 
+                        command = window.destroy) 
     
     # Grid method is chosen for placing the widgets at respective positions in a table like structure by specifying rows and columns
 
