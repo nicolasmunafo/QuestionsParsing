@@ -133,7 +133,7 @@ def manage_ui(ui_ctx: UIContext):
     
     # Create a File Explorer label
     label_select_file = Label(window, 
-                                text = ui_ctx.input_file_name,
+                                text = ui_ctx.input_folder,
                                 width = 100, height = 2, 
                                 fg = "blue",
                                 justify=LEFT)
@@ -145,7 +145,7 @@ def manage_ui(ui_ctx: UIContext):
                             command = lambda: browseFiles(label_select_file, button_input_data, ui_ctx))
     
     label_output_file = Label(window, 
-                                text = ui_ctx.output_file_name,
+                                text = ui_ctx.output_folder,
                                 width = 100, height = 2, 
                                 fg = "blue")
     
