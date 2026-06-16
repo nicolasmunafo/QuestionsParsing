@@ -213,7 +213,8 @@ def create_questions_file(ui_ctx: UIContext):
         prev_line = curr_line
 
     # Change the first paragraph as a title
-    output_file.paragraphs[0].style = "Heading 1"
+    output_file.paragraphs[0].style = "Title"
+    output_file.paragraphs[0].style.font.size = Pt(20)
 
     # Chenge the font to calibri for normal
     style = output_file.styles['Normal']

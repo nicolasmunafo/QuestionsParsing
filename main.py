@@ -12,6 +12,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-# TODO: What if changes back directory? it stacks in the label
-# TODO: Enable button to create file only when both directories are set
+# TODO: Check case when .json does not exist
+# TODO: Test edge cases when one of the directories is not set
 # TODO: PyMuPDF (fitz) to get Bold and format
