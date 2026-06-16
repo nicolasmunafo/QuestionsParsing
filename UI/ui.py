@@ -90,7 +90,7 @@ def browseFiles(label: tk.Label, types_list: List, ui_ctx: UIContext) -> None:
         filename = ui_ctx.output_file_name
      
     # Change label contents
-    label.configure(text=label["text"] + filename)
+    label.configure(text=filename)
 
 
 def create_window() -> Tk:
