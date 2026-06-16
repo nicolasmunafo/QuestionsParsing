@@ -46,8 +46,12 @@ class UIContext:
         else:
             with open(self._persist_file, "r") as f:
                 json_file = json.load(f)
-                self._input_folder = json_file[UIContext.ContextPersistData.Input_Folder.name]
-                self._output_folder = json_file[UIContext.ContextPersistData.Output_Folder.name]
+
+                # If the file was created but the keys were not found, it will set it to ""
+                self._input_folder = json_file.get(UIContext.ContextPersistData.Input_Folder.name, "")
+                self._output_folder = json_file.get(UIContext.ContextPersistData.Output_Folder.name, "")
+                # self._input_folder = json_file[UIContext.ContextPersistData.Input_Folder.name]
+                # self._output_folder = json_file[UIContext.ContextPersistData.Output_Folder.name]
                 self._output_file_name = self._output_folder
 
     @property
