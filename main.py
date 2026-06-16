@@ -12,8 +12,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-# TODO: Show the latest directory in the label
-# TODO: Align buttons and text in the window
 # TODO: What if changes back directory? it stacks in the label
 # TODO: Enable button to create file only when both directories are set
 # TODO: PyMuPDF (fitz) to get Bold and format

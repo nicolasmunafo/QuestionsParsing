@@ -110,7 +110,7 @@ def create_window() -> Tk:
 
     # Set window size
     window_width = 640
-    window_height = 300
+    window_height = 150
 
     # get the screen dimension
     screen_width = window.winfo_screenwidth()
@@ -130,6 +130,8 @@ def manage_ui(ui_ctx: UIContext):
     '''Create the window, UI and buttons'''
     
     window = create_window()
+    window.columnconfigure(0, weight=1, minsize=150)
+    window.columnconfigure(1, weight=1)
     
     # Create a File Explorer label
     label_select_file = Label(window, 
@@ -165,17 +167,17 @@ def manage_ui(ui_ctx: UIContext):
     
     # Grid method is chosen for placing the widgets at respective positions in a table like structure by specifying rows and columns
 
-    label_select_file.grid(column = 1, row = 1)
+    label_select_file.grid(column = 1, row = 1, sticky="e", padx=10)
     
-    button_select_file.grid(column = 0, row = 1)
+    button_select_file.grid(column = 0, row = 1, sticky="w", padx=10)
 
-    label_output_file.grid(column = 1, row = 2)
+    label_output_file.grid(column = 1, row = 2, sticky="e", padx=10)
     
-    button_select_output.grid(column = 0, row = 2)
+    button_select_output.grid(column = 0, row = 2, sticky="w", padx=10)
 
-    button_create_file.grid(column = 1, row = 3)
+    button_create_file.grid(column = 0, row = 3, columnspan=2, pady=5)
     
-    button_exit.grid(column = 1, row = 4)
+    button_exit.grid(column = 0, row = 4, columnspan=2, pady=5)
 
     # label_select_file.grid(column = 0, row = 1)
     
