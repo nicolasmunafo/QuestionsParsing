@@ -12,4 +12,5 @@ def main():
 if __name__ == "__main__":
     main()
 
+# TODO: check if the file actually has questions, otherwise, return
 # TODO: PyMuPDF (fitz) to get Bold and format

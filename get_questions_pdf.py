@@ -6,6 +6,7 @@ from collections import deque
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 import sys
+import pymupdf
 
 import tkinter as tk
 from tkinter import messagebox
@@ -54,6 +55,9 @@ def create_questions_file(ui_ctx: UIContext):
         print(f"File {file_path} not found.")
         tk.messagebox.showerror(title="File not found", message=f"File {file_path} not found.")
         # sys.exit(1)
+
+    pdf_doc_example = pymupdf.open(file_path)
+    print(pdf_doc_example)
 
     # --------------------------------------------
     # Open the file to write the final results
