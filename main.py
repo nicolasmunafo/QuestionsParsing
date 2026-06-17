@@ -12,4 +12,5 @@ def main():
 if __name__ == "__main__":
     main()
 
+# TODO: When the line starts with -, add \n
 # TODO: PyMuPDF (fitz) to get Bold and format

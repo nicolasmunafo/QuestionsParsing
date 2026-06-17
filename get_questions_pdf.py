@@ -33,7 +33,8 @@ def can_be_omitted(line):
     return ("Medizinische Grundlagen; 2026-2027" in line or
             "Barbara" in line or
             re.match(r'^[0-9]', line) or
-            line == " "
+            line == " " or
+            "Lösungen" in line
             )
 
 
@@ -125,15 +126,22 @@ def create_questions_file(ui_ctx: UIContext):
     while solutions_full_text:
         line = solutions_full_text.popleft()
 
-        if starts_with_number(line) and previous_line == "":
-            line = remove_number(line)
-            previous_line = line
-        elif previous_line != "":
-            if ord(line[0]) > 32:
-                previous_line += line
-            else:
-                solutions_list.append(previous_line)
-                previous_line = ""
+        if starts_with_number(line):
+            # If the line starts with a number and there was not a previous line, remove the number, it's a new question
+            line = remove_number(line)           
+            
+            # Append the previous question in the list only if previous_line is empty
+            if previous_line != "":
+                solutions_list.append(previous_line)            
+            
+            # set the new previous line
+            previous_line = line           
+            
+        else:
+            # If the line does not start with a number and it's relevant, concatenate it with the previous line
+            if not(can_be_omitted(line)):
+                if previous_line != "":
+                    previous_line += line
 
     if previous_line != "":
         solutions_list.append(previous_line)
