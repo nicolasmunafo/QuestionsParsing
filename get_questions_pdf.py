@@ -37,7 +37,6 @@ def can_be_omitted(line):
             line == " "
             )
 
-
 def create_questions_file(ui_ctx: UIContext):
 
     # --------------------------------------------
@@ -50,14 +49,12 @@ def create_questions_file(ui_ctx: UIContext):
         tk.messagebox.showerror(title="File not found", message=f"Select a .pdf file.")
         
     try:
-        questions_file = pdf.PdfReader(file_path)
+        questions_file = pymupdf.open(file_path)
     except FileNotFoundError:
         print(f"File {file_path} not found.")
         tk.messagebox.showerror(title="File not found", message=f"File {file_path} not found.")
         # sys.exit(1)
 
-    pdf_doc_example = pymupdf.open(file_path)
-    print(pdf_doc_example)
 
     # --------------------------------------------
     # Open the file to write the final results
@@ -84,17 +81,31 @@ def create_questions_file(ui_ctx: UIContext):
 
     text_per_page = dict()
 
-    for page_num, pages in enumerate(questions_file.pages):
-        text_per_page[page_num+1] = pages.extract_text().splitlines()
+    for page_num, page in enumerate(questions_file):
+        text_per_page[page_num+1] = page.get_text("text").splitlines()
 
+    pass
 
     # --------------------------------------------
     # Look for the solutions page
     # --------------------------------------------
 
+    # solutions_page = None
+    # for page in text_per_page.keys():
+    #     for line_num, line in enumerate(text_per_page[page]):
+    #         if starts_with_number(line) or is_questions_page(line):
+    #             print(f"{page} not solutions page")
+    #             break
+    #         if is_solutions_page(line):
+    #             solutions_page = page
+    #             break
+    #     if solutions_page is not None:
+    #         break
+
     solutions_page = None
-    for page in text_per_page.keys():
-        for line_num, line in enumerate(text_per_page[page]):
+    for page_num, page in enumerate(questions_file):
+        lines = page.get_text("text").splitlines()
+        for line in lines:
             if starts_with_number(line) or is_questions_page(line):
                 print(f"{page} not solutions page")
                 break
@@ -104,8 +115,18 @@ def create_questions_file(ui_ctx: UIContext):
         if solutions_page is not None:
             break
 
-    if solutions_page is None:
-        raise ValueError("Solutions page not found.")
+    # if solutions_page is None:
+    #     raise ValueError("Solutions page not found.")
+    
+
+    for page in questions_file:
+        text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
+        for block in text_blocks:
+            for line in block["lines"]:
+                for span in line["spans"]:
+                    text = span["text"]
+                    color = pymupdf.sRGB_to_rgb(span["color"])
+                    print(f"Text: {text}, Color: {color}")
 
     # --------------------------------------------
     # Create a list with the full text of the questions and solutions
@@ -225,3 +246,10 @@ def create_questions_file(ui_ctx: UIContext):
 
     output_file.save(output_file_path)
     tk.messagebox.showinfo(title="File created", message=f"File \"{output_file_name}.docx\" successfully created!")
+
+
+ui_ctx = UIContext()
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
+ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
+
+create_questions_file(ui_ctx)
