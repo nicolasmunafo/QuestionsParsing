@@ -37,6 +37,51 @@ def can_be_omitted(line):
             "Lösungen" in line
             )
 
+def is_new_line(line: str):
+    return (re.match(r'^[0-9].\s', line) or
+            line.startswith("-")
+            )
+
+def add_paragraph_from_line(output_file: docx.Document, line: str) -> None:
+    added_paragraph = output_file.add_paragraph(line)
+    added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    added_paragraph.paragraph_format.space_after = 0
+
+def get_solutions(output_file: docx.Document, solutions_full_text: deque, current_question: int) -> None:
+
+    solution_to_add = ""
+
+    while solutions_full_text:
+        line = solutions_full_text[0]
+        
+        if starts_with_number(line):                      
+            # Save the current solution question only if solution_to_add is empty. Otherwise, break the loop
+            if solution_to_add == "":
+                line = remove_number(line)           
+                solution_to_add = line
+            else:
+                break            
+        else:
+            # If the line does not start with a number and it's relevant, concatenate it with the previous line
+            if not(can_be_omitted(line)):
+                if solution_to_add != "":
+                    # If it's an ordered or unordered list, add the previous line as a paragraph and add a line break
+                    if is_new_line(line):
+                        add_paragraph_from_line(output_file, solution_to_add)
+                        solution_to_add = line
+                    else:
+                        solution_to_add += line
+        
+        # Always pop the line at the end of an iteration. If the next line is a new solution, it will not add it
+        line = solutions_full_text.popleft()
+
+
+    # Add the latest solution if there is something
+    if solution_to_add != "":
+        add_paragraph_from_line(output_file, solution_to_add)
+
+    # Add an additional line
+    output_file.add_paragraph("")
 
 def create_questions_file(ui_ctx: UIContext):
 
@@ -120,31 +165,34 @@ def create_questions_file(ui_ctx: UIContext):
     # Create a new solutions deque with one solution per element
     # --------------------------------------------
 
-    solutions_list = deque()
-    previous_line = ""
+    # solutions_list = deque()
+    # previous_line = ""
 
-    while solutions_full_text:
-        line = solutions_full_text.popleft()
+    # while solutions_full_text:
+    #     line = solutions_full_text.popleft()
 
-        if starts_with_number(line):
-            # If the line starts with a number and there was not a previous line, remove the number, it's a new question
-            line = remove_number(line)           
+    #     if starts_with_number(line):
+    #         # If the line starts with a number and there was not a previous line, remove the number, it's a new question
+    #         line = remove_number(line)           
             
-            # Append the previous question in the list only if previous_line is empty
-            if previous_line != "":
-                solutions_list.append(previous_line)            
+    #         # Append the previous question in the list only if previous_line is empty
+    #         if previous_line != "":
+    #             solutions_list.append(previous_line)            
             
-            # set the new previous line
-            previous_line = line           
+    #         # set the new previous line
+    #         previous_line = line           
             
-        else:
-            # If the line does not start with a number and it's relevant, concatenate it with the previous line
-            if not(can_be_omitted(line)):
-                if previous_line != "":
-                    previous_line += line
+    #     else:
+    #         # If the line does not start with a number and it's relevant, concatenate it with the previous line
+    #         if not(can_be_omitted(line)):
+    #             if previous_line != "":
+    #                 # If it's an ordered or unordered list, add a line break
+    #                 if is_new_line(line):
+    #                     previous_line += "\n"
+    #                 previous_line += line
 
-    if previous_line != "":
-        solutions_list.append(previous_line)
+    # if previous_line != "":
+    #     solutions_list.append(previous_line)
 
 
     # --------------------------------------------
@@ -207,10 +255,11 @@ def create_questions_file(ui_ctx: UIContext):
                 run.bold = True
 
             # Add the solution and an additional line
-            added_paragraph = output_file.add_paragraph(solutions_list[current_question])
-            added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-            added_paragraph.paragraph_format.space_after = 0
-            output_file.add_paragraph("")
+            get_solutions(output_file, solutions_full_text, current_question)
+            # added_paragraph = output_file.add_paragraph(solutions_list[current_question])
+            # added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            # added_paragraph.paragraph_format.space_after = 0
+            # output_file.add_paragraph("")
 
             # Reset all question variables
             is_question = False
