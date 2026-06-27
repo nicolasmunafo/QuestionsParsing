@@ -57,8 +57,6 @@ def get_solutions(output_file: docx.Document, solutions_full_text: deque, curren
         
         print("New line" if "\n" in line else "")
 
-# TODO: when the line is a heading do not add it to the Lösung
-
         if starts_with_number(line):                      
             # Save the current solution question only if solution_to_add is empty. Otherwise, break the loop
             if solution_to_add == "":
@@ -176,41 +174,6 @@ def create_questions_file(ui_ctx: UIContext):
         elif page >= solutions_page:
             solutions_full_text += text_per_page[page]
 
-    # --------------------------------------------
-    # Create a new solutions deque with one solution per element
-    # --------------------------------------------
-
-# TODO: Clean-up and remove this part
-
-    # solutions_list = deque()
-    # previous_line = ""
-
-    # while solutions_full_text:
-    #     line = solutions_full_text.popleft()
-
-    #     if starts_with_number(line):
-    #         # If the line starts with a number and there was not a previous line, remove the number, it's a new question
-    #         line = remove_number(line)           
-            
-    #         # Append the previous question in the list only if previous_line is empty
-    #         if previous_line != "":
-    #             solutions_list.append(previous_line)            
-            
-    #         # set the new previous line
-    #         previous_line = line           
-            
-    #     else:
-    #         # If the line does not start with a number and it's relevant, concatenate it with the previous line
-    #         if not(can_be_omitted(line)):
-    #             if previous_line != "":
-    #                 # If it's an ordered or unordered list, add a line break
-    #                 if is_new_line(line):
-    #                     previous_line += "\n"
-    #                 previous_line += line
-
-    # if previous_line != "":
-    #     solutions_list.append(previous_line)
-
 
     # --------------------------------------------
     # Start saving the contents in a new file
@@ -273,11 +236,6 @@ def create_questions_file(ui_ctx: UIContext):
 
             # Add the solution and an additional line
             get_solutions(output_file, solutions_full_text, current_question)
-# TODO: Clean-up and remove this part
-            # added_paragraph = output_file.add_paragraph(solutions_list[current_question])
-            # added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-            # added_paragraph.paragraph_format.space_after = 0
-            # output_file.add_paragraph("")
 
             # Reset all question variables
             is_question = False
