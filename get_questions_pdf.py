@@ -50,20 +50,30 @@ def add_paragraph_from_line(output_file: docx.Document, line: str) -> None:
 def get_solutions(output_file: docx.Document, solutions_full_text: deque, current_question: int) -> None:
 
     solution_to_add = ""
+    omitted_lines = 0
 
     while solutions_full_text:
         line = solutions_full_text[0]
         
+        print("New line" if "\n" in line else "")
+
+# TODO: when the line is a heading do not add it to the Lösung
+
         if starts_with_number(line):                      
             # Save the current solution question only if solution_to_add is empty. Otherwise, break the loop
             if solution_to_add == "":
                 line = remove_number(line)           
                 solution_to_add = line
+                omitted_lines = 0
             else:
                 break            
         else:
             # If the line does not start with a number and it's relevant, concatenate it with the previous line
             if not(can_be_omitted(line)):
+                # If previously a line was omitted, and it was only one, it means this is a title, so the solution is finalized
+                if omitted_lines == 1:
+                    break
+                
                 if solution_to_add != "":
                     # If it's an ordered or unordered list, add the previous line as a paragraph and add a line break
                     if is_new_line(line):
@@ -71,6 +81,11 @@ def get_solutions(output_file: docx.Document, solutions_full_text: deque, curren
                         solution_to_add = line
                     else:
                         solution_to_add += line
+                
+                omitted_lines = 0
+            else:
+                # If the line can be omitted, detect this in case the next line is still part of the solution
+                omitted_lines += 1
         
         # Always pop the line at the end of an iteration. If the next line is a new solution, it will not add it
         line = solutions_full_text.popleft()
@@ -165,6 +180,8 @@ def create_questions_file(ui_ctx: UIContext):
     # Create a new solutions deque with one solution per element
     # --------------------------------------------
 
+# TODO: Clean-up and remove this part
+
     # solutions_list = deque()
     # previous_line = ""
 
@@ -256,6 +273,7 @@ def create_questions_file(ui_ctx: UIContext):
 
             # Add the solution and an additional line
             get_solutions(output_file, solutions_full_text, current_question)
+# TODO: Clean-up and remove this part
             # added_paragraph = output_file.add_paragraph(solutions_list[current_question])
             # added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             # added_paragraph.paragraph_format.space_after = 0

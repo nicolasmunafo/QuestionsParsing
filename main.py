@@ -12,5 +12,6 @@ def main():
 if __name__ == "__main__":
     main()
 
+# TODO: Error with solution 21 und 24 Lernziele 1
 # TODO: When the line starts with -, add \n
 # TODO: PyMuPDF (fitz) to get Bold and format
