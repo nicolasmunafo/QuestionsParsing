@@ -33,9 +33,69 @@ def is_solutions_page(line):
 def can_be_omitted(line):
     return ("Medizinische Grundlagen; 2026-2027" in line or
             "Barbara" in line or
-            re.match(r'^[0-9]', line) or
-            line == " "
+            re.match(r'^[0-9]\s', line) or
+            line == " " or
+            "Lösungen" in line
             )
+
+def is_new_line(line: str):
+    return (re.match(r'^[0-9].\s', line) or
+            line.startswith("-")
+            )
+
+def add_paragraph_from_line(output_file: docx.Document, line: str) -> None:
+    added_paragraph = output_file.add_paragraph(line)
+    added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    added_paragraph.paragraph_format.space_after = 0
+
+def get_solutions(output_file: docx.Document, solutions_full_text: deque, current_question: int) -> None:
+
+    solution_to_add = ""
+    omitted_lines = 0
+
+    while solutions_full_text:
+        line = solutions_full_text[0]
+        
+        print("New line" if "\n" in line else "")
+
+        if starts_with_number(line):                      
+            # Save the current solution question only if solution_to_add is empty. Otherwise, break the loop
+            if solution_to_add == "":
+                line = remove_number(line)           
+                solution_to_add = line
+                omitted_lines = 0
+            else:
+                break            
+        else:
+            # If the line does not start with a number and it's relevant, concatenate it with the previous line
+            if not(can_be_omitted(line)):
+                # If previously a line was omitted, and it was only one, it means this is a title, so the solution is finalized
+                if omitted_lines == 1:
+                    break
+                
+                if solution_to_add != "":
+                    # If it's an ordered or unordered list, add the previous line as a paragraph and add a line break
+                    if is_new_line(line):
+                        add_paragraph_from_line(output_file, solution_to_add)
+                        solution_to_add = line
+                    else:
+                        solution_to_add += line
+                
+                omitted_lines = 0
+            else:
+                # If the line can be omitted, detect this in case the next line is still part of the solution
+                omitted_lines += 1
+        
+        # Always pop the line at the end of an iteration. If the next line is a new solution, it will not add it
+        solutions_full_text.popleft()
+
+
+    # Add the latest solution if there is something
+    if solution_to_add != "":
+        add_paragraph_from_line(output_file, solution_to_add)
+
+    # Add an additional line
+    output_file.add_paragraph("")
 
 def create_questions_file(ui_ctx: UIContext):
 
@@ -140,29 +200,6 @@ def create_questions_file(ui_ctx: UIContext):
         elif page >= solutions_page:
             solutions_full_text += text_per_page[page]
 
-    # --------------------------------------------
-    # Create a new solutions deque with one solution per element
-    # --------------------------------------------
-
-    solutions_list = deque()
-    previous_line = ""
-
-    while solutions_full_text:
-        line = solutions_full_text.popleft()
-
-        if starts_with_number(line) and previous_line == "":
-            line = remove_number(line)
-            previous_line = line
-        elif previous_line != "":
-            if ord(line[0]) > 32:
-                previous_line += line
-            else:
-                solutions_list.append(previous_line)
-                previous_line = ""
-
-    if previous_line != "":
-        solutions_list.append(previous_line)
-
 
     # --------------------------------------------
     # Start saving the contents in a new file
@@ -218,16 +255,12 @@ def create_questions_file(ui_ctx: UIContext):
         
         # If is a question, add the associated solution
         elif is_question:
-            # output_file.paragraphs[-1].paragraph_format
             added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             for run in added_paragraph.runs:
                 run.bold = True
 
             # Add the solution and an additional line
-            added_paragraph = output_file.add_paragraph(solutions_list[current_question])
-            added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-            added_paragraph.paragraph_format.space_after = 0
-            output_file.add_paragraph("")
+            get_solutions(output_file, solutions_full_text, current_question)
 
             # Reset all question variables
             is_question = False
