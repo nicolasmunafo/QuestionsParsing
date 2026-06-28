@@ -32,7 +32,7 @@ def is_solutions_page(line):
 def can_be_omitted(line):
     return ("Medizinische Grundlagen; 2026-2027" in line or
             "Barbara" in line or
-            re.match(r'^[0-9]', line) or
+            re.match(r'^[0-9]\s', line) or
             line == " " or
             "Lösungen" in line
             )
@@ -86,7 +86,7 @@ def get_solutions(output_file: docx.Document, solutions_full_text: deque, curren
                 omitted_lines += 1
         
         # Always pop the line at the end of an iteration. If the next line is a new solution, it will not add it
-        line = solutions_full_text.popleft()
+        solutions_full_text.popleft()
 
 
     # Add the latest solution if there is something
@@ -229,7 +229,6 @@ def create_questions_file(ui_ctx: UIContext):
         
         # If is a question, add the associated solution
         elif is_question:
-            # output_file.paragraphs[-1].paragraph_format
             added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             for run in added_paragraph.runs:
                 run.bold = True
