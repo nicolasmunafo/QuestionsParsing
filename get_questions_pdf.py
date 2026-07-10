@@ -51,6 +51,7 @@ def get_solutions(output_file: docx.Document, solutions_full_text: deque, curren
 
     solution_to_add = ""
     omitted_lines = 0
+    line: str
 
     while solutions_full_text:
         line = solutions_full_text[0]
@@ -61,7 +62,9 @@ def get_solutions(output_file: docx.Document, solutions_full_text: deque, curren
             # Save the current solution question only if solution_to_add is empty. Otherwise, break the loop
             if solution_to_add == "":
                 line = remove_number(line)           
-                solution_to_add = line
+                
+                # For cases in which line is null because it was just a number, like 10)
+                solution_to_add = line if line != "" else line + " "        
                 omitted_lines = 0
             else:
                 break            

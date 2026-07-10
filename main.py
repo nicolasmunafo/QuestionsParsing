@@ -11,5 +11,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# TODO: PyMuPDF (fitz) to get Bold and format
