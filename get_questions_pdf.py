@@ -48,6 +48,17 @@ def add_paragraph_from_line(output_file: docx.Document, line: str) -> None:
     added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     added_paragraph.paragraph_format.space_after = 0
 
+
+def is_bold(flags: int) -> bool:
+    return flags & 2 ** 4
+
+def is_italic(flags: int) -> bool:
+    return flags & 2 ** 1
+
+def is_underlined(flags: int) -> bool:
+    return flags & 2 ** 0
+
+
 def get_solutions(output_file: docx.Document, solutions_full_text: deque, current_question: int) -> None:
 
     solution_to_add = ""
@@ -153,18 +164,6 @@ def create_questions_file(ui_ctx: UIContext):
     # Look for the solutions page
     # --------------------------------------------
 
-    # solutions_page = None
-    # for page in text_per_page.keys():
-    #     for line_num, line in enumerate(text_per_page[page]):
-    #         if starts_with_number(line) or is_questions_page(line):
-    #             print(f"{page} not solutions page")
-    #             break
-    #         if is_solutions_page(line):
-    #             solutions_page = page
-    #             break
-    #     if solutions_page is not None:
-    #         break
-
     solutions_page = None
     for page_num, page in enumerate(questions_file):
         lines = page.get_text("text").splitlines()
@@ -181,13 +180,14 @@ def create_questions_file(ui_ctx: UIContext):
     # if solutions_page is None:
     #     raise ValueError("Solutions page not found.")
     
-
-    for page in questions_file:
+    for page in questions_file[1:]:
         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
         for block in text_blocks:
             for line in block["lines"]:
                 for span in line["spans"]:
                     text = span["text"]
+                    if is_bold(span["flags"]):
+                        print("It's bold")
                     color = pymupdf.sRGB_to_rgb(span["color"])
                     print(f"Text: {text}, Color: {color}")
 
@@ -284,8 +284,30 @@ def create_questions_file(ui_ctx: UIContext):
     tk.messagebox.showinfo(title="File created", message=f"File \"{output_file_name}.docx\" successfully created!")
 
 
+# TODO: Delete this later, just for testing
 ui_ctx = UIContext()
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
-ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
+# ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
+ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py"
 
 create_questions_file(ui_ctx)
+
+'''
+https://pymupdf.readthedocs.io/en/latest/app1.html
+<page>
+    <text block>
+        <line>
+            <span>
+                <char>
+    <image block>
+        <img>
+A text page consists of blocks (= roughly paragraphs).
+
+A block consists of either lines and their characters, or an image.
+
+A line consists of spans.
+
+A span consists of adjacent characters with identical font properties: name, size, flags and color.
+
+'''
