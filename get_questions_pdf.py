@@ -213,6 +213,7 @@ def create_questions_file(ui_ctx: UIContext):
 
     prev_line = ""
     curr_line = ""
+    is_question = False              # To detect if the previous line was a question so that it is not formatted as a headline
     questions_initiated = False             # To detect once the first lines of the document are omitted
 
     for page in questions_full_text:
@@ -225,6 +226,9 @@ def create_questions_file(ui_ctx: UIContext):
                     
                     span_text = span["text"]
                     span_flags = span["flags"]
+
+                    if span_text.startswith("4)"):
+                        pass
 
                     # Check this for the first words from each line
                     if span_num == 0:
@@ -241,21 +245,26 @@ def create_questions_file(ui_ctx: UIContext):
                         if starts_with_number(span_text):
 
                             is_question = True
+                            # prev_line_question = True
                             # if the next line is not a question and is not blank, concatenate them
-                            if not(starts_with_number(curr_line)) and curr_line != " ":
-                                # prev_line += curr_line
-                                add_run_with_format(added_paragraph, span_text, span_flags)
-                                continue
+                            # if not(starts_with_number(curr_line)) and curr_line != " ":
+                            #     # prev_line += curr_line
+                            #     add_run_with_format(added_paragraph, span_text, span_flags)
+                            #     continue
                         
                         else:
                             if can_be_omitted(span_text):
                                 # prev_line = curr_line
                                 continue
 
-                            if prev_line != " ":
+                            if not(is_question):
                                 is_heading = True
-                            elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
-                                break
+
+
+                            # if prev_line != " ":
+                            #     is_heading = True
+                            # elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
+                            #     break
                     
                     # In any other case, add it as a run in the current paragraph
                     add_run_with_format(added_paragraph, span_text, span_flags)
