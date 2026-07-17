@@ -213,6 +213,7 @@ def create_questions_file(ui_ctx: UIContext):
 
     prev_line = ""
     curr_line = ""
+    questions_initiated = False             # To detect once the first lines of the document are omitted
 
     for page in questions_full_text:
         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
@@ -225,12 +226,13 @@ def create_questions_file(ui_ctx: UIContext):
                     span_text = span["text"]
                     span_flags = span["flags"]
 
-
                     # Check this for the first words from each line
                     if span_num == 0:
                         # If line is not questions (the same as is not a questions page) go to the next line
-                        if not(is_questions_page(span_text)):
-                            continue               
+                        if not(is_questions_page(span_text)) and not(questions_initiated):
+                            continue
+                        elif not(questions_initiated):
+                            questions_initiated = True
                         
                         # If span_num is 0, it is the start of a new paragraph
                         added_paragraph = output_file.add_paragraph()                         # Add a new paragraph for each line
