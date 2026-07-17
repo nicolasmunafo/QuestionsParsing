@@ -50,13 +50,18 @@ def add_paragraph_from_line(output_file: docx.Document, line: str) -> None:
 
 
 def is_bold(flags: int) -> bool:
-    return flags & 2 ** 4
+    return (flags & 2 ** 4) > 0
 
 def is_italic(flags: int) -> bool:
-    return flags & 2 ** 1
+    return (flags & 2 ** 1) > 0
 
 def is_underlined(flags: int) -> bool:
-    return flags & 2 ** 0
+    return (flags & 2 ** 0) > 0
+
+def add_run_with_format(paragraph, text: str, is_text_bold: bool, is_text_italic: bool) -> None:
+    run = paragraph.add_run(text)
+    run.bold = is_text_bold
+    run.italic = is_text_italic
 
 
 def get_solutions(output_file: docx.Document, solutions_full_text: deque, current_question: int) -> None:
@@ -149,16 +154,6 @@ def create_questions_file(ui_ctx: UIContext):
         tk.messagebox.showerror(title="File locked", message=f"File {file_path} is locked or already open.")
         # sys.exit(1)
 
-    # --------------------------------------------
-    # Create a dictionary with the text of each page
-    # --------------------------------------------
-
-    text_per_page = dict()
-
-    for page_num, page in enumerate(questions_file):
-        text_per_page[page_num+1] = page.get_text("text").splitlines()
-
-    pass
 
     # --------------------------------------------
     # Look for the solutions page
@@ -172,7 +167,7 @@ def create_questions_file(ui_ctx: UIContext):
                 print(f"{page} not solutions page")
                 break
             if is_solutions_page(line):
-                solutions_page = page
+                solutions_page = page_num
                 break
         if solutions_page is not None:
             break
@@ -180,16 +175,19 @@ def create_questions_file(ui_ctx: UIContext):
     # if solutions_page is None:
     #     raise ValueError("Solutions page not found.")
     
-    for page in questions_file[1:]:
-        text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
-        for block in text_blocks:
-            for line in block["lines"]:
-                for span in line["spans"]:
-                    text = span["text"]
-                    if is_bold(span["flags"]):
-                        print("It's bold")
-                    color = pymupdf.sRGB_to_rgb(span["color"])
-                    print(f"Text: {text}, Color: {color}")
+
+    # Just for testing purposes
+
+    # for page in questions_file[1:]:
+    #     text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
+    #     for block in text_blocks:
+    #         for line in block["lines"]:
+    #             for span in line["spans"]:
+    #                 text = span["text"]
+    #                 if is_bold(span["flags"]):
+    #                     print("It's bold")
+    #                 color = pymupdf.sRGB_to_rgb(span["color"])
+    #                 print(f"Text: {text}, Color: {color}")
 
     # --------------------------------------------
     # Create a list with the full text of the questions and solutions
@@ -197,11 +195,8 @@ def create_questions_file(ui_ctx: UIContext):
 
     questions_full_text = deque()
     solutions_full_text = deque()
-    for page in text_per_page.keys():
-        if page < solutions_page:
-            questions_full_text += text_per_page[page]
-        elif page >= solutions_page:
-            solutions_full_text += text_per_page[page]
+    questions_full_text += questions_file[0:solutions_page]
+    solutions_full_text += questions_file[solutions_page:]
 
 
     # --------------------------------------------
@@ -209,67 +204,143 @@ def create_questions_file(ui_ctx: UIContext):
     # --------------------------------------------
 
     # Clean up and remove the first lines
-    current_line = 0
-    while questions_full_text:
-        line = questions_full_text[current_line]
-        if not(is_questions_page(line)):
-            questions_full_text.popleft()
-        else:
-            break
+    # while questions_full_text:
+    #     line = questions_full_text[current_line]
+    #     if not(is_questions_page(line)):
+    #         questions_full_text.popleft()
+    #     else:
+    #         break
 
-    current_question = 0
-
-    prev_line = questions_full_text.popleft()
+    prev_line = ""
     curr_line = ""
-    is_heading = False
-    is_question = False
 
-    while questions_full_text:
-        curr_line = questions_full_text.popleft()
+    count_test = 0
 
-        # If the previous line is a question
-        if starts_with_number(prev_line):
+    for page in questions_full_text:
+        text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
+        
+        for block_num, block in enumerate(text_blocks):
+            for line_num, line in enumerate(block["lines"]):
+                paragraph = output_file.add_paragraph()                         # Add a new paragraph for each line
+                count_test += 1
+                
+                for span_num, span in enumerate(line["spans"]):
+                    
+                    span_text = span["text"]
+                    span_flags = span["flags"]
+                    is_text_bold = is_bold(span_flags)
+                    is_text_italic = is_italic(span_flags)
+
+                    add_run_with_format(paragraph, span_text, is_text_bold, is_text_italic)
+
+                    # Check this for the first words from each line
+                    if span_num == 0:
+                        # If line is not questions (the same as is not a questions page) go to the next line
+                        if not(is_questions_page(span_text)):
+                            continue               
+                
+                        # If the current line is a question
+                        if starts_with_number(span_text):
+
+                            is_question = True
+                            # if the next line is not a question and is not blank, concatenate them
+                            if not(starts_with_number(curr_line)) and curr_line != " ":
+                                # prev_line += curr_line
+                                add_run_with_format(paragraph, span_text, is_text_bold, is_text_italic)
+                                continue
+                        
+                        else:
+                            if can_be_omitted(span_text):
+                                # prev_line = curr_line
+                                continue
+
+                            if prev_line != " ":
+                                is_heading = True
+                            elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
+                                break
+                    
+                    if count_test == 40:
+                        break
+
+                    # In any other case, add it as a paragraph
+                    # added_paragraph = output_file.add_paragraph(prev_line)
+                    
+                    # # If is heading, set the style as a heading
+                    # if is_heading:
+                    #     paragraph.style = "Heading 2"
+                    #     paragraph.paragraph_format.space_after = Pt(12)
+                    #     is_heading = False
+                    
+                    # # If is a question, add the associated solution
+                    # elif is_question:
+                    #     paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                    #     for run in added_paragraph.runs:
+                    #         run.bold = True
+
+                    #     # Add the solution and an additional line
+                    #     get_solutions(output_file, solutions_full_text, current_question)
+
+                    #     # Reset all question variables
+                    #     is_question = False
+                    #     current_question += 1
+
+                    #     prev_line = curr_line
+   
+
+
+    # current_question = 0
+
+    # prev_line = questions_full_text.popleft()
+    # curr_line = ""
+    # is_heading = False
+    # is_question = False
+
+    # while questions_full_text:
+    #     curr_line = questions_full_text.popleft()
+
+    #     # If the previous line is a question
+    #     if starts_with_number(prev_line):
             
-            is_question = True
-            # if the next line is not a question and is not blank, concatenate them
-            if not(starts_with_number(curr_line)) and curr_line != " ":
-                prev_line += curr_line
-                continue
+    #         is_question = True
+    #         # if the next line is not a question and is not blank, concatenate them
+    #         if not(starts_with_number(curr_line)) and curr_line != " ":
+    #             prev_line += curr_line
+    #             continue
         
-        else:
-            if can_be_omitted(prev_line):
-                prev_line = curr_line
-                continue
+    #     else:
+    #         if can_be_omitted(prev_line):
+    #             prev_line = curr_line
+    #             continue
 
-            if prev_line != " ":
-                is_heading = True
-            elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
-                break
+    #         if prev_line != " ":
+    #             is_heading = True
+    #         elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
+    #             break
             
 
-        # In any other case, add it as a paragraph
-        added_paragraph = output_file.add_paragraph(prev_line)
+    #     # In any other case, add it as a paragraph
+    #     added_paragraph = output_file.add_paragraph(prev_line)
         
-        # If is heading, set the style as a heading
-        if is_heading:
-            added_paragraph.style = "Heading 2"
-            added_paragraph.paragraph_format.space_after = Pt(12)
-            is_heading = False
+    #     # If is heading, set the style as a heading
+    #     if is_heading:
+    #         added_paragraph.style = "Heading 2"
+    #         added_paragraph.paragraph_format.space_after = Pt(12)
+    #         is_heading = False
         
-        # If is a question, add the associated solution
-        elif is_question:
-            added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-            for run in added_paragraph.runs:
-                run.bold = True
+    #     # If is a question, add the associated solution
+    #     elif is_question:
+    #         added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    #         for run in added_paragraph.runs:
+    #             run.bold = True
 
-            # Add the solution and an additional line
-            get_solutions(output_file, solutions_full_text, current_question)
+    #         # Add the solution and an additional line
+    #         get_solutions(output_file, solutions_full_text, current_question)
 
-            # Reset all question variables
-            is_question = False
-            current_question += 1
+    #         # Reset all question variables
+    #         is_question = False
+    #         current_question += 1
 
-        prev_line = curr_line
+    #     prev_line = curr_line
 
     # Change the first paragraph as a title
     output_file.paragraphs[0].style = "Title"
