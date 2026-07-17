@@ -58,10 +58,10 @@ def is_italic(flags: int) -> bool:
 def is_underlined(flags: int) -> bool:
     return (flags & 2 ** 0) > 0
 
-def add_run_with_format(paragraph, text: str, is_text_bold: bool, is_text_italic: bool) -> None:
+def add_run_with_format(paragraph, text: str, span_flags: int) -> None:
     run = paragraph.add_run(text)
-    run.bold = is_text_bold
-    run.italic = is_text_italic
+    run.bold = is_bold(span_flags)
+    run.italic = is_italic(span_flags)
 
 
 def get_solutions(output_file: docx.Document, solutions_full_text: deque, current_question: int) -> None:
@@ -214,30 +214,26 @@ def create_questions_file(ui_ctx: UIContext):
     prev_line = ""
     curr_line = ""
 
-    count_test = 0
-
     for page in questions_full_text:
         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
         
         for block_num, block in enumerate(text_blocks):
             for line_num, line in enumerate(block["lines"]):
-                paragraph = output_file.add_paragraph()                         # Add a new paragraph for each line
-                count_test += 1
                 
                 for span_num, span in enumerate(line["spans"]):
                     
                     span_text = span["text"]
                     span_flags = span["flags"]
-                    is_text_bold = is_bold(span_flags)
-                    is_text_italic = is_italic(span_flags)
 
-                    add_run_with_format(paragraph, span_text, is_text_bold, is_text_italic)
 
                     # Check this for the first words from each line
                     if span_num == 0:
                         # If line is not questions (the same as is not a questions page) go to the next line
                         if not(is_questions_page(span_text)):
                             continue               
+                        
+                        # If span_num is 0, it is the start of a new paragraph
+                        added_paragraph = output_file.add_paragraph()                         # Add a new paragraph for each line
                 
                         # If the current line is a question
                         if starts_with_number(span_text):
@@ -246,7 +242,7 @@ def create_questions_file(ui_ctx: UIContext):
                             # if the next line is not a question and is not blank, concatenate them
                             if not(starts_with_number(curr_line)) and curr_line != " ":
                                 # prev_line += curr_line
-                                add_run_with_format(paragraph, span_text, is_text_bold, is_text_italic)
+                                add_run_with_format(added_paragraph, span_text, span_flags)
                                 continue
                         
                         else:
@@ -259,21 +255,18 @@ def create_questions_file(ui_ctx: UIContext):
                             elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
                                 break
                     
-                    if count_test == 40:
-                        break
-
-                    # In any other case, add it as a paragraph
-                    # added_paragraph = output_file.add_paragraph(prev_line)
+                    # In any other case, add it as a run in the current paragraph
+                    add_run_with_format(added_paragraph, span_text, span_flags)
                     
-                    # # If is heading, set the style as a heading
-                    # if is_heading:
-                    #     paragraph.style = "Heading 2"
-                    #     paragraph.paragraph_format.space_after = Pt(12)
-                    #     is_heading = False
+                    # If is heading, set the style as a heading
+                    if is_heading:
+                        added_paragraph.style = "Heading 2"
+                        added_paragraph.paragraph_format.space_after = Pt(12)
+                        is_heading = False
                     
-                    # # If is a question, add the associated solution
+                    # If it is a question, add the associated solution
                     # elif is_question:
-                    #     paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                    #     added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                     #     for run in added_paragraph.runs:
                     #         run.bold = True
 
