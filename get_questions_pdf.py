@@ -176,19 +176,6 @@ def create_questions_file(ui_ctx: UIContext):
     #     raise ValueError("Solutions page not found.")
     
 
-    # Just for testing purposes
-
-    # for page in questions_file[1:]:
-    #     text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
-    #     for block in text_blocks:
-    #         for line in block["lines"]:
-    #             for span in line["spans"]:
-    #                 text = span["text"]
-    #                 if is_bold(span["flags"]):
-    #                     print("It's bold")
-    #                 color = pymupdf.sRGB_to_rgb(span["color"])
-    #                 print(f"Text: {text}, Color: {color}")
-
     # --------------------------------------------
     # Create a list with the full text of the questions and solutions
     # --------------------------------------------
@@ -239,12 +226,15 @@ def create_questions_file(ui_ctx: UIContext):
                             questions_initiated = True
                         
                         # If span_num is 0, it is the start of a new paragraph
-                        added_paragraph = output_file.add_paragraph()                         # Add a new paragraph for each line
+                        # added_paragraph = output_file.add_paragraph()
                 
                         # If the current line is a question
                         if starts_with_number(span_text):
 
                             is_question = True
+                            # If span_num is 0, it is the start of a new paragraph
+                            added_paragraph = output_file.add_paragraph()
+                            
                             # prev_line_question = True
                             # if the next line is not a question and is not blank, concatenate them
                             # if not(starts_with_number(curr_line)) and curr_line != " ":
@@ -254,11 +244,13 @@ def create_questions_file(ui_ctx: UIContext):
                         
                         else:
                             if can_be_omitted(span_text):
-                                # prev_line = curr_line
                                 continue
 
+                            # If it is not a question, then it is a heading so we have to add a new paragraph
+                            # Otherwise the previous question continues and we don't have to create a new paragraph.
                             if not(is_question):
                                 is_heading = True
+                                added_paragraph = output_file.add_paragraph()
 
 
                             # if prev_line != " ":
@@ -266,7 +258,7 @@ def create_questions_file(ui_ctx: UIContext):
                             # elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
                             #     break
                     
-                    # In any other case, add it as a run in the current paragraph
+                    # In any case, add it as a run in the current paragraph
                     add_run_with_format(added_paragraph, span_text, span_flags)
                     
                     # If is heading, set the style as a heading
@@ -361,7 +353,9 @@ def create_questions_file(ui_ctx: UIContext):
 
 # TODO: Delete this later, just for testing
 ui_ctx = UIContext()
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
 # ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
 ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py"
