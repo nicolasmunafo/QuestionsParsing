@@ -69,7 +69,7 @@ def add_run_with_format(paragraph, text: str, span_flags: int) -> None:
     run.italic = is_italic(span_flags)
 
 
-def get_solutions(output_file: docx.Document, solutions_full_text: deque, current_question: int) -> None:
+def get_solutions(output_file: docx.Document, solutions_full_text: deque) -> None:
 
     solution_to_add = ""
     omitted_lines = 0
@@ -185,34 +185,31 @@ def create_questions_file(ui_ctx: UIContext):
     # Create a list with the full text of the questions and solutions
     # --------------------------------------------
 
-    questions_full_text = deque()
-    solutions_full_text = deque()
-    questions_full_text += questions_file[0:solutions_page]
-    solutions_full_text += questions_file[solutions_page:]
+    questions_full_text = questions_file[0:solutions_page]
+    solutions_full_text = questions_file[solutions_page:]
 
 
     # --------------------------------------------
     # Start saving the contents in a new file
     # --------------------------------------------
 
-
-    prev_line = ""
-    curr_line = ""
-    is_question = False              # To detect if the previous line was a question so that it is not formatted as a headline
+    is_new_question = False                     # To detect if the previous line was a question so that it is not formatted as a headline
     questions_initiated = False             # To detect once the first lines of the document are omitted
+    question_number = 0
+    solution_number = 0
+    prev_heading = False                    # If the previous line was a heading, do not add answer
 
     for page in questions_full_text:
         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
         
         for block_num, block in enumerate(text_blocks):
             for line_num, line in enumerate(block["lines"]):
-                
                 for span_num, span in enumerate(line["spans"]):
                     
                     span_text = span["text"]
                     span_flags = span["flags"]
 
-                    if span_text.startswith("14)"):
+                    if span_text.startswith("6)"):
                         pass
 
                     # Check this for the first words from each line
@@ -222,16 +219,15 @@ def create_questions_file(ui_ctx: UIContext):
                             continue
                         elif not(questions_initiated):
                             questions_initiated = True
-                        
-                        # If span_num is 0, it is the start of a new paragraph
-                        # added_paragraph = output_file.add_paragraph()
-                
+                                    
                         # If the current line is a question
                         if starts_with_number(span_text):
-                            is_question = True
+                            is_new_question = True
+
+                            question_number += 1
                             
-                            # If span_num is 0, it is the start of a new paragraph
-                            added_paragraph = output_file.add_paragraph()
+                            # # If span_num is 0, it is the start of a new paragraph
+                            # added_paragraph = output_file.add_paragraph()
                         
                         else:
                             if can_be_omitted(span_text):
@@ -240,43 +236,57 @@ def create_questions_file(ui_ctx: UIContext):
                             # If it is not a question, then it is a heading so we have to add a new paragraph
                             # Otherwise the previous question continues and we don't have to create a new paragraph.
                             # if not(is_question):
-                            if is_bold(span_flags):
+                            if not(is_bold(span_flags)):
+                                is_new_question = False
+                                if is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
+                                    # added_paragraph = output_file.add_paragraph(style="List Bullet")
+                                    span_text = ""
+                            else:
                                 is_heading = True
-                                added_paragraph = output_file.add_paragraph()
-                            elif is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
-                                added_paragraph = output_file.add_paragraph(style="List Bullet")
-                                span_text = ""
+                                # added_paragraph = output_file.add_paragraph()
 
+                    else:
+                        add_run_with_format(added_paragraph, span_text.strip(), span_flags)
 
-                            # if prev_line != " ":
-                            #     is_heading = True
-                            # elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
-                            #     break
                     
-                    # In any case, add it as a run in the current paragraph, using strip to remove trailing spaces
+                    # If this is a new question, add the solution from the previous question
+                    if question_number > 1 and is_new_question and not(prev_heading):
+                        prev_heading = False
+                        solution_number += 1
+                        
+                        added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+                        # TODO: set the question to bold
+                        # for run in added_paragraph.runs:
+                        #     run.bold = True
+
+                        # Add the solution and an additional line
+                        # get_solutions(output_file, solutions_full_text)
+                        added_paragraph = output_file.add_paragraph()
+                        add_run_with_format(added_paragraph, "solution", span_flags)
+
+                        # Reset all question variables
+                        is_question = False
+
+                    # TODO: add case when it is a bullet list
+                    # The paragraph must be added at the end to add the solution of the previous question
+                    added_paragraph = output_file.add_paragraph()
+                    # In any case, add the text as a run in the current paragraph, using strip to remove trailing spaces
                     add_run_with_format(added_paragraph, span_text.strip(), span_flags)
-                    
+
                     # If is heading, set the style as a heading
                     if is_heading:
                         added_paragraph.style = "Heading 2"
                         added_paragraph.paragraph_format.space_after = Pt(12)
                         is_heading = False
-                    
-                    # If it is a question, add the associated solution
-                    # elif is_question:
-                    #     added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                    #     for run in added_paragraph.runs:
-                    #         run.bold = True
-
-                    #     # Add the solution and an additional line
-                    #     get_solutions(output_file, solutions_full_text, current_question)
-
-                    #     # Reset all question variables
-                    #     is_question = False
-                    #     current_question += 1
-
-                    #     prev_line = curr_line
+                        prev_heading = True
+                    else:
+                        prev_heading = False
    
+    # Add the solution for the final question and an additional line
+    # get_solutions(output_file, solutions_full_text)
+    added_paragraph = output_file.add_paragraph()
+    add_run_with_format(added_paragraph, "solution", span_flags)
 
     # Change the first paragraph as a title
     output_file.paragraphs[0].style = "Title"
@@ -295,8 +305,8 @@ def create_questions_file(ui_ctx: UIContext):
 ui_ctx = UIContext()
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
-# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
 # ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
 ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py"
