@@ -13,6 +13,19 @@ from tkinter import messagebox
 from UI.ui import manage_ui
 from UI.ui import UIContext
 
+class ParserState:
+    solution_page: int
+    solution_block: int
+    solution_line: int
+    solution_span: int
+
+    def __init__(self):
+        self.solution_page = 0
+        self.solution_block = 0
+        self.solution_line = 0
+        self.solution_span = 0
+
+
 def starts_with_number(line):
     return re.match(r'[0-9]+\)', line)
 
@@ -69,54 +82,122 @@ def add_run_with_format(paragraph, text: str, span_flags: int) -> None:
     run.italic = is_italic(span_flags)
 
 
-def get_solutions(output_file: docx.Document, solutions_full_text: deque) -> None:
+
+    # for page_num in range(parser_state.solution_page, len(solutions_full_text)):
+
+    #     for block_num in range(parser_state.solution_block, len(text_blocks)):
+
+    #         for line_num in range(parser_state.solution_line, len(block["lines"])):
+
+    #             for span_num in range(parser_state.solution_span, len(line["spans"])):
+                    
+# for page_num in range(parser_state.solution_page, len(solutions_full_text)):
+#         page
+
+#         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
+#         for block_num, block in enumerate(text_blocks[parser_state.solution_block:]):
+#             for line_num, line in enumerate(block["lines"][parser_state.solution_line:]):
+#                 for span_num, span in enumerate(line["spans"][parser_state.solution_span:]):
+                    
+
+def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_state: ParserState) -> None:
 
     solution_to_add = ""
     omitted_lines = 0
     line: str
+    added_paragraph = None
+    is_new_solution = False
+    solution_ended = False
+    page_num, block_num, line_num, span_num = parser_state.solution_page, parser_state.solution_block, parser_state.solution_line, parser_state.solution_span
 
-    while solutions_full_text:
-        line = solutions_full_text[0]
+    while page_num < len(solutions_full_text) and not(solution_ended):     
+        page = solutions_full_text[page_num]
+        text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
         
-        print("New line" if "\n" in line else "")
+        while block_num < len(text_blocks) and not(solution_ended):
+            block = text_blocks[block_num]
+            
+            while line_num < len(block["lines"]) and not(solution_ended):
+                line = block["lines"][line_num]
 
-        if starts_with_number(line):                      
-            # Save the current solution question only if solution_to_add is empty. Otherwise, break the loop
-            if solution_to_add == "":
-                line = remove_number(line)           
+                while span_num < len(line["spans"]):
+                    span = line["spans"][span_num]
+
+                    span_text = span["text"]
+                    span_flags = span["flags"]
+                    if span_text.startswith("8)"):
+                        pass
+
+                    if span_num == 0:
+                        if can_be_omitted(span_text):
+                            span_num += 1
+                            continue
+
+                        if starts_with_number(span_text):                           
+                            # If the line starts with number and it's a new solution, the entire solution was already added
+                            if is_new_solution:
+                                solution_ended = True
+                                break
+
+                            span_text = remove_number(span_text)
+                            is_new_solution = True
+                            added_paragraph = output_file.add_paragraph()
+                    
+                    
+                    add_run_with_format(added_paragraph, span_text, span_flags)
+                    span_num += 1
                 
-                # For cases in which line is null because it was just a number, like 10)
-                solution_to_add = line if line != "" else line + " "        
-                omitted_lines = 0
-            else:
-                break            
-        else:
-            # If the line does not start with a number and it's relevant, concatenate it with the previous line
-            if not(can_be_omitted(line)):
-                # If previously a line was omitted, and it was only one, it means this is a title, so the solution is finalized
-                if omitted_lines == 1:
-                    break
-                
-                if solution_to_add != "":
-                    # If it's an ordered or unordered list, add the previous line as a paragraph and add a line break
-                    if is_new_line(line):
-                        add_paragraph_from_line(output_file, solution_to_add)
-                        solution_to_add = line
-                    else:
-                        solution_to_add += line
-                
-                omitted_lines = 0
-            else:
-                # If the line can be omitted, detect this in case the next line is still part of the solution
-                omitted_lines += 1
+                if not(solution_ended):
+                    span_num = 0
+                    line_num += 1
+
+            if not(solution_ended):        
+                line_num = 0
+                block_num += 1       
         
-        # Always pop the line at the end of an iteration. If the next line is a new solution, it will not add it
-        solutions_full_text.popleft()
+        if not(solution_ended):
+            block_num = 0
+            page_num += 1
+                 
+                        
+                        # Save the current solution question only if solution_to_add is empty. Otherwise, break the loop
+                        # if solution_to_add == "":
+                        #     line = remove_number(line)
+                        #            
+                            
+                        #     # For cases in which line is null because it was just a number, like 10)
+                        #     solution_to_add = line if line != "" else line + " "        
+                        #     omitted_lines = 0
+                        # # else:
+                        # #     break            
+                    # else:
+                    #     # If the line does not start with a number and it's relevant, concatenate it with the previous line
+                    #     if not(can_be_omitted(line)):
+                    #         # If previously a line was omitted, and it was only one, it means this is a title, so the solution is finalized
+                    #         if omitted_lines == 1:
+                    #             break
+                            
+                    #         if solution_to_add != "":
+                    #             # If it's an ordered or unordered list, add the previous line as a paragraph and add a line break
+                    #             if is_new_line(line):
+                    #                 add_paragraph_from_line(output_file, solution_to_add)
+                    #                 solution_to_add = line
+                    #             else:
+                    #                 solution_to_add += line
+                            
+                    #         omitted_lines = 0
+                    #     else:
+                    #         # If the line can be omitted, detect this in case the next line is still part of the solution
+                    #         omitted_lines += 1
+                    
+                    # Always pop the line at the end of an iteration. If the next line is a new solution, it will not add it
+                    # solutions_full_text.popleft()
 
-
-    # Add the latest solution if there is something
-    if solution_to_add != "":
-        add_paragraph_from_line(output_file, solution_to_add)
+    # Store the state of the parser to start from this section
+    parser_state.solution_page, parser_state.solution_block, parser_state.solution_line, parser_state.solution_span = page_num, block_num, line_num, span_num
+    # # Add the latest solution if there is something
+    # if solution_to_add != "":
+    #     add_paragraph_from_line(output_file, solution_to_add)
 
     # Add an additional line
     output_file.add_paragraph("")
@@ -199,6 +280,7 @@ def create_questions_file(ui_ctx: UIContext):
     solution_number = 0
     prev_heading = False                    # If the previous line was a heading, do not add answer
     is_bullet = False                       # For questions with bullets
+    parser_state = ParserState()
 
     for page in questions_full_text:
         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
@@ -262,9 +344,9 @@ def create_questions_file(ui_ctx: UIContext):
                         #     run.bold = True
 
                         # Add the solution and an additional line
-                        # get_solutions(output_file, solutions_full_text)
-                        added_paragraph = output_file.add_paragraph()
-                        add_run_with_format(added_paragraph, "solution", span_flags)
+                        get_solutions(output_file, solutions_full_text, parser_state)
+                        # added_paragraph = output_file.add_paragraph()
+                        # add_run_with_format(added_paragraph, "solution", span_flags)
 
                         # Reset all question variables
                         is_question = False
@@ -291,9 +373,9 @@ def create_questions_file(ui_ctx: UIContext):
 
    
     # Add the solution for the final question and an additional line
-    # get_solutions(output_file, solutions_full_text)
-    added_paragraph = output_file.add_paragraph()
-    add_run_with_format(added_paragraph, "solution", span_flags)
+    get_solutions(output_file, solutions_full_text, parser_state)
+    # added_paragraph = output_file.add_paragraph()
+    # add_run_with_format(added_paragraph, "solution", span_flags)
 
     # Change the first paragraph as a title
     output_file.paragraphs[0].style = "Title"
