@@ -56,12 +56,6 @@ def is_new_line(line: str):
             line.startswith("-")
             )
 
-def add_paragraph_from_line(output_file: docx.Document, line: str) -> None:
-    added_paragraph = output_file.add_paragraph(line)
-    added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-    added_paragraph.paragraph_format.space_after = 0
-
-
 def is_bold(flags: int) -> bool:
     return (flags & 2 ** 4) > 0
 
@@ -226,7 +220,6 @@ def create_questions_file(ui_ctx: UIContext):
     is_new_question = False                     # To detect if the previous line was a question so that it is not formatted as a headline
     questions_initiated = False             # To detect once the first lines of the document are omitted
     question_number = 0
-    solution_number = 0
     prev_heading = False                    # If the previous line was a heading, do not add answer
     is_bullet = False                       # For questions with bullets
     parser_state = ParserState()
@@ -255,19 +248,13 @@ def create_questions_file(ui_ctx: UIContext):
                         # If the current line is a question
                         if starts_with_number(span_text):
                             is_new_question = True
-
-                            question_number += 1
-                            
-                            # # If span_num is 0, it is the start of a new paragraph
-                            # added_paragraph = output_file.add_paragraph()
-                        
+                            question_number += 1                       
                         else:
                             if can_be_omitted(span_text):
                                 continue
 
                             # If it is not a question, then it is a heading so we have to add a new paragraph
                             # Otherwise the previous question continues and we don't have to create a new paragraph.
-                            # if not(is_question):
                             if not(is_bold(span_flags)):
                                 is_new_question = False         # This is because this is the continuation of a previous question
                                 if is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
@@ -275,7 +262,6 @@ def create_questions_file(ui_ctx: UIContext):
                                     span_text = ""
                             else:
                                 is_heading = True
-                                # added_paragraph = output_file.add_paragraph()
 
                     else:
                         add_run_with_format(added_paragraph, span_text.strip(), span_flags)
@@ -284,7 +270,6 @@ def create_questions_file(ui_ctx: UIContext):
                     # If this is a new question, add the solution from the previous question
                     if question_number > 1 and is_new_question and not(prev_heading):
                         prev_heading = False
-                        solution_number += 1
                         
                         added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
@@ -295,17 +280,16 @@ def create_questions_file(ui_ctx: UIContext):
                         # Add the solution and an additional line
                         get_solutions(output_file, solutions_full_text, parser_state)
 
-                        # Reset all question variables
-                        is_question = False
 
                     # The paragraph must be added at the end to add the solution of the previous question
                     # If this is a new question or a heading, add a new paragraph
                     if is_new_question or is_heading:
                         added_paragraph = output_file.add_paragraph()
+                    
                     # In any case, add the text as a run in the current paragraph, using strip to remove trailing spaces
                     add_run_with_format(added_paragraph, span_text.strip(), span_flags)
 
-                    # If is heading, set the style as a heading
+                    # If it is heading, set the style as a heading
                     if is_heading:
                         added_paragraph.style = "Heading 2"
                         added_paragraph.paragraph_format.space_after = Pt(12)
@@ -338,10 +322,10 @@ def create_questions_file(ui_ctx: UIContext):
 
 # TODO: Delete this later, just for testing
 ui_ctx = UIContext()
-# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
 # ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
 ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py"
