@@ -237,7 +237,7 @@ def create_questions_file(ui_ctx: UIContext):
                             # Otherwise the previous question continues and we don't have to create a new paragraph.
                             # if not(is_question):
                             if not(is_bold(span_flags)):
-                                is_new_question = False
+                                is_new_question = False         # This is because this is the continuation of a previous question
                                 if is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
                                     # added_paragraph = output_file.add_paragraph(style="List Bullet")
                                     span_text = ""
@@ -270,7 +270,9 @@ def create_questions_file(ui_ctx: UIContext):
 
                     # TODO: add case when it is a bullet list
                     # The paragraph must be added at the end to add the solution of the previous question
-                    added_paragraph = output_file.add_paragraph()
+                    # If this is a new question or a heading, add a new paragraph
+                    if is_new_question or is_heading:
+                        added_paragraph = output_file.add_paragraph()
                     # In any case, add the text as a run in the current paragraph, using strip to remove trailing spaces
                     add_run_with_format(added_paragraph, span_text.strip(), span_flags)
 
@@ -305,8 +307,8 @@ def create_questions_file(ui_ctx: UIContext):
 ui_ctx = UIContext()
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
-# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
 # ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
 ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py"
