@@ -80,25 +80,7 @@ def add_run_with_format(paragraph, text: str, span_flags: int) -> None:
     run = paragraph.add_run(text)
     run.bold = is_bold(span_flags)
     run.italic = is_italic(span_flags)
-
-
-
-    # for page_num in range(parser_state.solution_page, len(solutions_full_text)):
-
-    #     for block_num in range(parser_state.solution_block, len(text_blocks)):
-
-    #         for line_num in range(parser_state.solution_line, len(block["lines"])):
-
-    #             for span_num in range(parser_state.solution_span, len(line["spans"])):
-                    
-# for page_num in range(parser_state.solution_page, len(solutions_full_text)):
-#         page
-
-#         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
-#         for block_num, block in enumerate(text_blocks[parser_state.solution_block:]):
-#             for line_num, line in enumerate(block["lines"][parser_state.solution_line:]):
-#                 for span_num, span in enumerate(line["spans"][parser_state.solution_span:]):
-                    
+                   
 
 def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_state: ParserState) -> None:
 
@@ -159,45 +141,12 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
             block_num = 0
             page_num += 1
                  
-                        
-                        # Save the current solution question only if solution_to_add is empty. Otherwise, break the loop
-                        # if solution_to_add == "":
-                        #     line = remove_number(line)
-                        #            
-                            
-                        #     # For cases in which line is null because it was just a number, like 10)
-                        #     solution_to_add = line if line != "" else line + " "        
-                        #     omitted_lines = 0
-                        # # else:
-                        # #     break            
-                    # else:
-                    #     # If the line does not start with a number and it's relevant, concatenate it with the previous line
-                    #     if not(can_be_omitted(line)):
-                    #         # If previously a line was omitted, and it was only one, it means this is a title, so the solution is finalized
-                    #         if omitted_lines == 1:
-                    #             break
-                            
-                    #         if solution_to_add != "":
-                    #             # If it's an ordered or unordered list, add the previous line as a paragraph and add a line break
-                    #             if is_new_line(line):
-                    #                 add_paragraph_from_line(output_file, solution_to_add)
-                    #                 solution_to_add = line
-                    #             else:
-                    #                 solution_to_add += line
-                            
-                    #         omitted_lines = 0
-                    #     else:
-                    #         # If the line can be omitted, detect this in case the next line is still part of the solution
-                    #         omitted_lines += 1
-                    
-                    # Always pop the line at the end of an iteration. If the next line is a new solution, it will not add it
-                    # solutions_full_text.popleft()
 
+    added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    added_paragraph.paragraph_format.space_after = 0
+    
     # Store the state of the parser to start from this section
     parser_state.solution_page, parser_state.solution_block, parser_state.solution_line, parser_state.solution_span = page_num, block_num, line_num, span_num
-    # # Add the latest solution if there is something
-    # if solution_to_add != "":
-    #     add_paragraph_from_line(output_file, solution_to_add)
 
     # Add an additional line
     output_file.add_paragraph("")
@@ -345,13 +294,10 @@ def create_questions_file(ui_ctx: UIContext):
 
                         # Add the solution and an additional line
                         get_solutions(output_file, solutions_full_text, parser_state)
-                        # added_paragraph = output_file.add_paragraph()
-                        # add_run_with_format(added_paragraph, "solution", span_flags)
 
                         # Reset all question variables
                         is_question = False
 
-                    # TODO: add case when it is a bullet list
                     # The paragraph must be added at the end to add the solution of the previous question
                     # If this is a new question or a heading, add a new paragraph
                     if is_new_question or is_heading:
