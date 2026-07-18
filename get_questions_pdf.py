@@ -198,6 +198,7 @@ def create_questions_file(ui_ctx: UIContext):
     question_number = 0
     solution_number = 0
     prev_heading = False                    # If the previous line was a heading, do not add answer
+    is_bullet = False                       # For questions with bullets
 
     for page in questions_full_text:
         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
@@ -239,7 +240,7 @@ def create_questions_file(ui_ctx: UIContext):
                             if not(is_bold(span_flags)):
                                 is_new_question = False         # This is because this is the continuation of a previous question
                                 if is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
-                                    # added_paragraph = output_file.add_paragraph(style="List Bullet")
+                                    is_bullet = True
                                     span_text = ""
                             else:
                                 is_heading = True
@@ -284,6 +285,10 @@ def create_questions_file(ui_ctx: UIContext):
                         prev_heading = True
                     else:
                         prev_heading = False
+                        if is_bullet:
+                            added_paragraph = output_file.add_paragraph(style="List Bullet")
+                            is_bullet = False
+
    
     # Add the solution for the final question and an additional line
     # get_solutions(output_file, solutions_full_text)
