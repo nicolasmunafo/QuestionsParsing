@@ -1,11 +1,9 @@
-import pypdf as pdf
 import docx
 from pathlib import Path
 import re
 from collections import deque
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
-import sys
 import pymupdf
 
 import tkinter as tk
@@ -40,8 +38,6 @@ def is_questions_page(line):
 
 def is_solutions_page(line):
     return line.startswith("Lösungen")
-    
-    # return(re.split(r'\s[0-9]+\)', line, maxsplit=0))
 
 def can_be_omitted(line):
     return ("Medizinische Grundlagen; 2026-2027" in line or
@@ -78,12 +74,10 @@ def add_run_with_format(paragraph, text: str, span_flags: int) -> None:
 
 def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_state: ParserState) -> None:
 
-    solution_to_add = ""
-    omitted_lines = 0
     line: str
     added_paragraph = None
-    is_new_solution = False
-    solution_ended = False
+    is_new_solution = False             # If this is true, this is a new solution and the previous has ended
+    solution_ended = False              # If this is true, the current solution has been fully parsed
     page_num, block_num, line_num, span_num = parser_state.solution_page, parser_state.solution_block, parser_state.solution_line, parser_state.solution_span
 
     while page_num < len(solutions_full_text) and not(solution_ended):     
@@ -98,11 +92,8 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
 
                 while span_num < len(line["spans"]):
                     span = line["spans"][span_num]
-
                     span_text = span["text"]
                     span_flags = span["flags"]
-                    if span_text.startswith("8)"):
-                        pass
 
                     if span_num == 0:
                         if can_be_omitted(span_text):
@@ -118,8 +109,7 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                             span_text = remove_number(span_text)
                             is_new_solution = True
                             added_paragraph = output_file.add_paragraph()
-                    
-                    
+                                        
                     add_run_with_format(added_paragraph, span_text, span_flags)
                     span_num += 1
                 
@@ -234,9 +224,6 @@ def create_questions_file(ui_ctx: UIContext):
                     span_text = span["text"]
                     span_flags = span["flags"]
 
-                    if span_text.startswith("6)"):
-                        pass
-
                     # Check this for the first words from each line
                     if span_num == 0:
                         # If line is not questions (the same as is not a questions page) go to the next line
@@ -304,8 +291,6 @@ def create_questions_file(ui_ctx: UIContext):
    
     # Add the solution for the final question and an additional line
     get_solutions(output_file, solutions_full_text, parser_state)
-    # added_paragraph = output_file.add_paragraph()
-    # add_run_with_format(added_paragraph, "solution", span_flags)
 
     # Change the first paragraph as a title
     output_file.paragraphs[0].style = "Title"
@@ -322,9 +307,9 @@ def create_questions_file(ui_ctx: UIContext):
 
 # TODO: Delete this later, just for testing
 ui_ctx = UIContext()
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
-# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
 # ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
