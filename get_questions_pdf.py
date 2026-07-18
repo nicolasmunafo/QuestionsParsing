@@ -58,6 +58,11 @@ def is_italic(flags: int) -> bool:
 def is_underlined(flags: int) -> bool:
     return (flags & 2 ** 0) > 0
 
+def is_bullet_span(span):
+    text = span["text"].strip()
+    return text in {"•", "◦", "▪", "-", "-", "*"}
+
+
 def add_run_with_format(paragraph, text: str, span_flags: int) -> None:
     run = paragraph.add_run(text)
     run.bold = is_bold(span_flags)
@@ -190,13 +195,6 @@ def create_questions_file(ui_ctx: UIContext):
     # Start saving the contents in a new file
     # --------------------------------------------
 
-    # Clean up and remove the first lines
-    # while questions_full_text:
-    #     line = questions_full_text[current_line]
-    #     if not(is_questions_page(line)):
-    #         questions_full_text.popleft()
-    #     else:
-    #         break
 
     prev_line = ""
     curr_line = ""
@@ -214,7 +212,7 @@ def create_questions_file(ui_ctx: UIContext):
                     span_text = span["text"]
                     span_flags = span["flags"]
 
-                    if span_text.startswith("9)"):
+                    if span_text.startswith("14)"):
                         pass
 
                     # Check this for the first words from each line
@@ -245,6 +243,9 @@ def create_questions_file(ui_ctx: UIContext):
                             if is_bold(span_flags):
                                 is_heading = True
                                 added_paragraph = output_file.add_paragraph()
+                            elif is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
+                                added_paragraph = output_file.add_paragraph(style="List Bullet")
+                                span_text = ""
 
 
                             # if prev_line != " ":
@@ -252,8 +253,8 @@ def create_questions_file(ui_ctx: UIContext):
                             # elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
                             #     break
                     
-                    # In any case, add it as a run in the current paragraph
-                    add_run_with_format(added_paragraph, span_text, span_flags)
+                    # In any case, add it as a run in the current paragraph, using strip to remove trailing spaces
+                    add_run_with_format(added_paragraph, span_text.strip(), span_flags)
                     
                     # If is heading, set the style as a heading
                     if is_heading:
