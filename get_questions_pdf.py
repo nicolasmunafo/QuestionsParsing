@@ -214,7 +214,7 @@ def create_questions_file(ui_ctx: UIContext):
                     span_text = span["text"]
                     span_flags = span["flags"]
 
-                    if span_text.startswith("4)"):
+                    if span_text.startswith("9)"):
                         pass
 
                     # Check this for the first words from each line
@@ -230,17 +230,10 @@ def create_questions_file(ui_ctx: UIContext):
                 
                         # If the current line is a question
                         if starts_with_number(span_text):
-
                             is_question = True
+                            
                             # If span_num is 0, it is the start of a new paragraph
                             added_paragraph = output_file.add_paragraph()
-                            
-                            # prev_line_question = True
-                            # if the next line is not a question and is not blank, concatenate them
-                            # if not(starts_with_number(curr_line)) and curr_line != " ":
-                            #     # prev_line += curr_line
-                            #     add_run_with_format(added_paragraph, span_text, span_flags)
-                            #     continue
                         
                         else:
                             if can_be_omitted(span_text):
@@ -248,7 +241,8 @@ def create_questions_file(ui_ctx: UIContext):
 
                             # If it is not a question, then it is a heading so we have to add a new paragraph
                             # Otherwise the previous question continues and we don't have to create a new paragraph.
-                            if not(is_question):
+                            # if not(is_question):
+                            if is_bold(span_flags):
                                 is_heading = True
                                 added_paragraph = output_file.add_paragraph()
 
@@ -283,61 +277,6 @@ def create_questions_file(ui_ctx: UIContext):
                     #     prev_line = curr_line
    
 
-
-    # current_question = 0
-
-    # prev_line = questions_full_text.popleft()
-    # curr_line = ""
-    # is_heading = False
-    # is_question = False
-
-    # while questions_full_text:
-    #     curr_line = questions_full_text.popleft()
-
-    #     # If the previous line is a question
-    #     if starts_with_number(prev_line):
-            
-    #         is_question = True
-    #         # if the next line is not a question and is not blank, concatenate them
-    #         if not(starts_with_number(curr_line)) and curr_line != " ":
-    #             prev_line += curr_line
-    #             continue
-        
-    #     else:
-    #         if can_be_omitted(prev_line):
-    #             prev_line = curr_line
-    #             continue
-
-    #         if prev_line != " ":
-    #             is_heading = True
-    #         elif curr_line == " ":      # If the previous and current lines are spaces, just finish the document
-    #             break
-            
-
-    #     # In any other case, add it as a paragraph
-    #     added_paragraph = output_file.add_paragraph(prev_line)
-        
-    #     # If is heading, set the style as a heading
-    #     if is_heading:
-    #         added_paragraph.style = "Heading 2"
-    #         added_paragraph.paragraph_format.space_after = Pt(12)
-    #         is_heading = False
-        
-    #     # If is a question, add the associated solution
-    #     elif is_question:
-    #         added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-    #         for run in added_paragraph.runs:
-    #             run.bold = True
-
-    #         # Add the solution and an additional line
-    #         get_solutions(output_file, solutions_full_text, current_question)
-
-    #         # Reset all question variables
-    #         is_question = False
-    #         current_question += 1
-
-    #     prev_line = curr_line
-
     # Change the first paragraph as a title
     output_file.paragraphs[0].style = "Title"
     output_file.paragraphs[0].style.font.size = Pt(20)
@@ -355,7 +294,8 @@ def create_questions_file(ui_ctx: UIContext):
 ui_ctx = UIContext()
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
 # ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
 ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py"
