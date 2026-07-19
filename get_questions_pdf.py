@@ -14,7 +14,7 @@ from UI.ui import UIContext
 
 '''
 TODO: when adding "split" to solutions some lines concatenate without spaces
-TODO: set questions to bold
+TODO: set multiline questions to bold (question 14 Bewegungsaparat)
 TODO: set numbered lists when required
 TODO: check question 28 the text at the end that is not part of the bullets is added as a bullet
 '''
@@ -276,8 +276,8 @@ def create_questions_file(ui_ctx: UIContext):
                         added_paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
                         # TODO: set the question to bold
-                        # for run in added_paragraph.runs:
-                        #     run.bold = True
+                        for run in added_paragraph.runs:
+                            run.bold = True
 
                         # Add the solution and an additional line
                         get_solutions(output_file, solutions_full_text, parser_state)
@@ -303,7 +303,10 @@ def create_questions_file(ui_ctx: UIContext):
                             added_paragraph = output_file.add_paragraph(style="List Bullet")
                             is_bullet = False
 
-   
+    # Format last question
+    for run in added_paragraph.runs:
+        run.bold = True
+    
     # Add the solution for the final question and an additional line
     get_solutions(output_file, solutions_full_text, parser_state)
 
@@ -324,8 +327,8 @@ def create_questions_file(ui_ctx: UIContext):
 ui_ctx = UIContext()
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
-# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
 # ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
 ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py"
