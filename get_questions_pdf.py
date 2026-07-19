@@ -11,6 +11,14 @@ from tkinter import messagebox
 from UI.ui import manage_ui
 from UI.ui import UIContext
 
+
+'''
+TODO: when adding "split" to solutions some lines concatenate without spaces
+TODO: set questions to bold
+TODO: set numbered lists when required
+TODO: check question 28 the text at the end that is not part of the bullets is added as a bullet
+'''
+
 class ParserState:
     solution_page: int
     solution_block: int
@@ -109,6 +117,11 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                             span_text = remove_number(span_text)
                             is_new_solution = True
                             added_paragraph = output_file.add_paragraph()
+
+                        elif is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
+                            span_text = ""
+                            added_paragraph = output_file.add_paragraph(style="List Bullet")
+
 
                     # Add a run only if the current span is not a heading (headings have a size of 14 or more)                    
                     if added_paragraph and span["size"] < 14:
