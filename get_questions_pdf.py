@@ -109,8 +109,10 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                             span_text = remove_number(span_text)
                             is_new_solution = True
                             added_paragraph = output_file.add_paragraph()
-                                        
-                    add_run_with_format(added_paragraph, span_text, span_flags)
+
+                    # Add a run only if the current span is not a heading (headings have a size of 14 or more)                    
+                    if added_paragraph and span["size"] < 14:
+                        add_run_with_format(added_paragraph, span_text, span_flags)
                     span_num += 1
                 
                 if not(solution_ended):
