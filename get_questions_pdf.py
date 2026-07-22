@@ -13,6 +13,8 @@ from UI.ui import UIContext
 
 
 '''
+TODO: Extra Lernziele 7 - question 10: extra space after heading
+TODO: Extra Lernziele 7 - question 11: all lines concatenated in the same line
 TODO: when adding "split" to solutions some lines concatenate without spaces
 TODO: set multiline questions to bold (question 14 Bewegungsaparat)
 TODO: set numbered lists when required
@@ -70,8 +72,17 @@ def is_underlined(flags: int) -> bool:
     return (flags & 2 ** 0) > 0
 
 def is_bullet_span(span):
-    text = span["text"].strip()
-    return text in {"•", "◦", "▪", "-", "-", "*"}
+    text: str
+    text = span["text"][0]
+    bullet_list = {"•", "◦", "▪", "-", "-", "*"}
+    return text in bullet_list
+    # bullet_list = {"•", "◦", "▪", "-", "-", "*"}
+    # return text in bullet_list
+
+def remove_bullet(span) -> str:
+    text: str
+    text = span["text"][1:]
+    return text.lstrip()
 
 
 def add_run_with_format(paragraph, text: str, span_flags: int) -> None:
@@ -103,6 +114,9 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                     span_text = span["text"]
                     span_flags = span["flags"]
 
+                    if span_text.startswith("- "):
+                        pass
+
                     if span_num == 0:
                         if can_be_omitted(span_text):
                             span_num += 1
@@ -119,7 +133,7 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                             added_paragraph = output_file.add_paragraph()
 
                         elif is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
-                            span_text = ""
+                            span_text = remove_bullet(span)
                             added_paragraph = output_file.add_paragraph(style="List Bullet")
 
 
@@ -326,9 +340,9 @@ def create_questions_file(ui_ctx: UIContext):
 # TODO: Delete this later, just for testing
 ui_ctx = UIContext()
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\2. Lernziele Infektionslehre und Epidemiologie.pdf"
-# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
+ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\7. Lernziele Herz_ Kreislauf und Gefasssystem.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Fragen.pdf"
-ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
+# ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\Lernziele Bewegungsapparat.pdf"
 # ui_ctx.input_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading\\Fragen.pdf"
 # ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py\\FilesReading"
 ui_ctx.output_file_name = "C:\\Users\\Nicolas\\GitHub\\Automation_Py"
