@@ -146,6 +146,8 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                         elif is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
                             span_text = remove_bullet(span)
                             added_paragraph = output_file.add_paragraph(style="List Bullet")
+                        elif is_bold(span_flags):           # If the span starts with bold, then it is a new paragraph in the same solution
+                            added_paragraph = output_file.add_paragraph()
                     else:
                         if not(added_paragraph):
                             added_paragraph = output_file.add_paragraph()
