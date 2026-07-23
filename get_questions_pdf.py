@@ -13,7 +13,6 @@ from UI.ui import UIContext
 
 
 '''
-TODO: Extra Lernziele 7 - question 11 and 7: all lines concatenated in the same line
 TODO: when adding "split" to solutions some lines concatenate without spaces
 TODO: set multiline questions to bold (question 14 Bewegungsaparat)
 TODO: set numbered lists when required
@@ -25,12 +24,16 @@ class ParserState:
     solution_block: int
     solution_line: int
     solution_span: int
+    max_bbox_size: int
+    large_threshold: int
 
     def __init__(self):
         self.solution_page = 0
         self.solution_block = 0
         self.solution_line = 0
         self.solution_span = 0
+        self.max_bbox_size = 0
+        self.large_threshold = 20
 
 
 def starts_with_number(line):
@@ -97,15 +100,8 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
     is_new_solution = False             # If this is true, this is a new solution and the previous has ended
     solution_ended = False              # If this is true, the current solution has been fully parsed
     page_num, block_num, line_num, span_num = parser_state.solution_page, parser_state.solution_block, parser_state.solution_line, parser_state.solution_span
-
-    # for page_num, page in enumerate(solutions_full_text):
-    #     page = solutions_full_text[page_num]
-    #     text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
-    #     for block_num, block in enumerate(text_blocks):
-    #         lines = len(block["lines"])
-    #         print(f"Page {page_num} - Block {block_num} - {lines} ")
-
-    # pass
+    prev_large = 0                          # To detect the large of the line to see if it's a new paragraph
+    curr_large = 0
 
     while page_num < len(solutions_full_text) and not(solution_ended):     
         page = solutions_full_text[page_num]
@@ -116,6 +112,9 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
             
             while line_num < len(block["lines"]) and not(solution_ended):
                 line = block["lines"][line_num]
+                curr_large = round(line["bbox"][2] - line["bbox"][0])      # Substract x1-x0 from bounding boxes
+                if curr_large > parser_state.max_bbox_size:
+                    parser_state.max_bbox_size = curr_large
 
                 while span_num < len(line["spans"]):
                     span = line["spans"][span_num]
@@ -146,7 +145,8 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                         elif is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
                             span_text = remove_bullet(span)
                             added_paragraph = output_file.add_paragraph(style="List Bullet")
-                        elif is_bold(span_flags):           # If the span starts with bold, then it is a new paragraph in the same solution
+                        # If the span starts with bold and the prev line is smaller than the maximum, a new paragraph has to be created for this line
+                        elif is_bold(span_flags) and prev_large < (parser_state.max_bbox_size - parser_state.large_threshold):         
                             added_paragraph = output_file.add_paragraph()
                     else:
                         if not(added_paragraph):
@@ -161,6 +161,7 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                 if not(solution_ended):
                     span_num = 0
                     line_num += 1
+                    prev_large = curr_large
 
             if not(solution_ended):        
                 line_num = 0
