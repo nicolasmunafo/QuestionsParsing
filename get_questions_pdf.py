@@ -13,8 +13,7 @@ from UI.ui import UIContext
 
 
 '''
-TODO: Extra Lernziele 7 - question 10: extra space after heading
-TODO: Extra Lernziele 7 - question 11: all lines concatenated in the same line
+TODO: Extra Lernziele 7 - question 11 and 7: all lines concatenated in the same line
 TODO: when adding "split" to solutions some lines concatenate without spaces
 TODO: set multiline questions to bold (question 14 Bewegungsaparat)
 TODO: set numbered lists when required
@@ -99,6 +98,15 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
     solution_ended = False              # If this is true, the current solution has been fully parsed
     page_num, block_num, line_num, span_num = parser_state.solution_page, parser_state.solution_block, parser_state.solution_line, parser_state.solution_span
 
+    # for page_num, page in enumerate(solutions_full_text):
+    #     page = solutions_full_text[page_num]
+    #     text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
+    #     for block_num, block in enumerate(text_blocks):
+    #         lines = len(block["lines"])
+    #         print(f"Page {page_num} - Block {block_num} - {lines} ")
+
+    # pass
+
     while page_num < len(solutions_full_text) and not(solution_ended):     
         page = solutions_full_text[page_num]
         text_blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]
@@ -114,7 +122,7 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
                     span_text = span["text"]
                     span_flags = span["flags"]
 
-                    if span_text.startswith("- "):
+                    if span_text.startswith("1)"):
                         pass
 
                     if span_num == 0:
@@ -130,11 +138,17 @@ def get_solutions(output_file: docx.Document, solutions_full_text: list, parser_
 
                             span_text = remove_number(span_text)
                             is_new_solution = True
-                            added_paragraph = output_file.add_paragraph()
+
+                            # For cases where the question starts with "10) "(Like L 7- F 10) to not create extra lines
+                            if len(span_text) > 0:
+                                added_paragraph = output_file.add_paragraph()
 
                         elif is_bullet_span(span):        # If the span starts with - then add it as a bullet list and remove the text
                             span_text = remove_bullet(span)
                             added_paragraph = output_file.add_paragraph(style="List Bullet")
+                    else:
+                        if not(added_paragraph):
+                            added_paragraph = output_file.add_paragraph()
 
 
                     # Add a run only if the current span is not a heading (headings have a size of 14 or more)                    
